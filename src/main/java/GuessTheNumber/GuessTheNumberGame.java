@@ -5,10 +5,6 @@ import java.util.Scanner;
 
 
 public class GuessTheNumberGame {
-    public String getTitle (){
-      return "GUESS THE NUMBER GAME";
-    }
-  
     public void main(String[] args) {
         Random generator = new Random();
         Scanner scanner = new Scanner(System.in);
@@ -16,47 +12,43 @@ public class GuessTheNumberGame {
         int attempts = 0;
         int maxAttempts = 10;
 
-        System.out.println("-===========================-");
-        System.out.println("=== " + getTitle() + "===");
-        System.out.println("-===========================-");
+
+        Printer.displayTitle();
         boolean continuePlaying = true;
 
         while(continuePlaying) {
-            System.out.println("Guess the number (between 1 and 100)!");
+            Printer.displayRules();
             int number = generator.nextInt(100) + 1;
-            System.out.println("debug : the expected number is " + number);
-
-            while (number != userGuess && attempts < maxAttempts) {
+            UserTry userTry = new UserTry(userGuess, attempts);
+            Printer.displayCorrectAnswer(number);
+            while (userTry.hasGuessed(number) && userTry.attemptsAreLeft(maxAttempts)) {
                 String input = scanner.nextLine();
-                attempts++;
+                userTry.nextAttempt();
                 try {
                     userGuess = Integer.parseInt(input);
-                    if (userGuess == number) {
-                        System.out.println("You found it after " + attempts + " tries!");
+                    if (userTry.hasGuessed(number)) {
+                        Printer.displayWinMessage(attempts);
                     } else {
-                        String divergence = userGuess < number ? "smaller" : "greater";
-                        System.out.println("Wrong! Your number is " + divergence + " than the correct one. " + (maxAttempts-attempts) + "/" + maxAttempts + " tries left");
+                        Printer.displayFailMessage(userTry.getDivergence(number), attempts, maxAttempts);
                     }
                 } catch (NumberFormatException e) {
-                    System.out.println("Your input was '" + input + "', please enter a valid integer. " + (maxAttempts-attempts) + "/" + maxAttempts + " tries left");
+                    Printer.displayWrongEntryMessage(input, attempts, maxAttempts);
                 }
             }
 
-            if (number != userGuess) {
-                System.out.println("You lose after " + maxAttempts + " tries, the expected number was " + number);
+            if (!userTry.hasGuessed(number)) {
+                Printer.displayLoseMessage(maxAttempts, number);
             }
 
-            System.out.println("----------------------------------------------------");
-            System.out.println("Do you want to try again with a new number (yes/no)?");
+            Printer.askRetry();
             String userResponse = scanner.nextLine().trim().toLowerCase();
             continuePlaying = userResponse.equals("yes");
             if (continuePlaying) {
-                userGuess = 0;
-                attempts = 0;
+                userTry = UserTry.newOne();
             }
         }
 
-        System.out.println("== Thanks for playing! ==");
+        Printer.displayGoodBye();
         scanner.close();
     }
 }
